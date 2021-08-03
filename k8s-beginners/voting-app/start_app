@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# @file start_app
+# @ref https://www.udemy.com/course/learn-kubernetes/
+# @author Alister Lewis-Bowen <alister@lewis-bowen.org>
+
+[[ -n $DEBUG ]] && set -x
+set -eou pipefail
+
+apply() { kubectl apply -f "$1"; }
+
+clusterName=$(grep name kind-config.yaml | cut -d':' -f2 | xargs)
+voteAppPort=$(grep nodePort voting-app-service.yaml | cut -d':' -f2 | xargs)
+resultAppPort=$(grep nodePort result-app-service.yaml | cut -d':' -f2 | xargs)
+
+## Cycle the current k8s or just clean up
+[ "$(kind get clusters)" == "$clusterName" ] && {
+    read -p "✋ Do you want to cycle k8s?... [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        kind delete cluster --name "$clusterName"
+        kind create cluster --config kind-config.yaml
+    else
+        kubectl delete all -l app=demo-voting-app
+    fi
+}
+
+## python voting ui app
+# apply voting-app-pod.yaml
+apply voting-app-deployment.yaml
+apply voting-app-service.yaml
+## node result ui app
+# apply result-app-pod.yaml
+apply result-app-deployment.yaml
+apply result-app-service.yaml
+## redis in-memory storage for python app
+# apply redis-pod.yaml
+apply redis-deployment.yaml
+apply redis-service.yaml
+# postgres database for result app
+# apply postgres-pod.yaml
+apply postgres-deployment.yaml
+apply postgres-service.yaml
+## .net 'worker' to take in-memory items and store them in postgres
+# apply worker-app-pod.yaml
+apply worker-app-deployment.yaml
+## observe
+watch kubectl get deployment,pods,svc -l app=demo-voting-app
+## open UIs
+open "http://localhost:$voteAppPort"
+open "http://localhost:$resultAppPort"

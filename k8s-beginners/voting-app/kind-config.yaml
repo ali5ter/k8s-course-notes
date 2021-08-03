@@ -1,0 +1,18 @@
+# @file kind-config.yaml
+# @ref https://kind.sigs.k8s.io/docs/user/configuration/
+# @ref https://kind.sigs.k8s.io/docs/user/ingress/
+# @author Alister Lewis-Bowen <alister@lewis-bowen.org>
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: alb-voting-app-test
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30004
+        hostPort: 30004
+        listenAddress: "127.0.0.1"
+      - containerPort: 30005
+        hostPort: 30005
+        listenAddress: "127.0.0.1"
+  - role: worker
+  - role: worker

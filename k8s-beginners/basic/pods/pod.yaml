@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo
+  labels:
+    env: test
+    tier: front-end
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      env:
+        - name: foo
+          value: poo
